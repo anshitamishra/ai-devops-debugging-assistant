@@ -1,8 +1,8 @@
 # AI DevOps Debugging Assistant
 
-This project is a simple DevOps tool that helps in debugging issues from Kubernetes and CI/CD pipelines using a mix of rule-based logic and AI.
+This project is an AI-powered and rule-based DevOps debugging assistant with agentic capabilities. It helps in identifying and resolving issues from Kubernetes and CI/CD pipelines.
 
-The idea behind this project is to reduce the time spent in manually reading logs and figuring out what went wrong.
+The goal of this project is to reduce the time spent manually analyzing logs by providing clear root causes, fixes, and actionable next steps.
 
 ---
 
@@ -14,15 +14,25 @@ The idea behind this project is to reduce the time spent in manually reading log
   - OOMKilled
   - Permission errors
 
+- Uses rule-based logic for instant detection of known issues  
 - Uses AI to analyze unknown or complex logs  
+- Provides structured output with:
+  - Severity
+  - Root Cause
+  - Fix
+  - Suggested Action
+  - Next Step (agentic behavior)
+
 - Fetches logs directly from Kubernetes pods  
 - Falls back to `kubectl describe` when logs are not available  
 - Fetches Jenkins build logs using API  
+
 - Supports CLI usage:
   - `--log`
   - `--file`
   - `--pod`
   - `--jenkins`
+
 - Simple UI using Streamlit  
 
 ---
@@ -36,7 +46,6 @@ The idea behind this project is to reduce the time spent in manually reading log
 - LLM for analysis  
 
 ---
-
 ## How to Run
 
 ### CLI
@@ -58,24 +67,31 @@ http://localhost:8501
 
 ---
 ## How it Works
-The system first checks if the issue is a known one using simple rules.
-If it matches, it directly gives the root cause and fix.
-If the issue is not recognized, the logs are passed to an AI model which analyzes them and suggests possible fixes.
+
+The system follows a hybrid approach:
+1. It first checks logs using rule-based   detection for known issues
+2. If a match is found, it instantly returns a structured response
+3. If the issue is unknown, logs are sent to an AI model for analysis
 
 For Kubernetes:
-It tries kubectl logs
-If logs are not available, it uses kubectl describe to get more details
+
+- It tries kubectl logs
+- If logs are not available, it uses kubectl describe to get detailed events
+
+The output is structured to not only identify the issue but also guide the next steps, making it more like a decision-support DevOps assistant.
 
 ## What I Learned
-How Kubernetes debugging actually works
-How to use subprocess to run system commands
-How to integrate APIs (Jenkins)
-How to design a system using both rule-based and AI approaches
+ - End-to-end CI/CD workflow using Jenkins, Docker, and Kubernetes
+ - Kubernetes debugging using logs and describe
+ - Running system commands using Python  (subprocess)
+ - Integrating APIs and AI models
+ - Designing hybrid systems using rule-based and AI approaches
 
 ## Future Improvements
-Auto-fix issues (like restarting pods)
-Add alerts (Slack/Email)
-Better UI dashboard
+- Auto-remediation (e.g., restarting pods automatically)
+- Integration with monitoring tools (Prometheus, Grafana)
+- Real-time alerts (Slack/Email)
+- More advanced UI dashboard
 
 ## Author
 Built as part of hands-on learning in DevOps, Cloud, and AI.
