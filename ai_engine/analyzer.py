@@ -6,28 +6,35 @@ MODEL = "gemma3:4b"
 
 def analyze_log(log):
     prompt = f"""
-You are a DevOps engineer.
+You are a senior DevOps engineer.
 
-Analyze the logs below and give output in EXACT format:
+Analyze the logs and respond in this EXACT structured format:
+
+Severity:
+<LOW | MEDIUM | HIGH>
 
 Root Cause:
-<one specific reason only>
+<one clear reason>
 
 Fix:
 1. step
 2. step
 
-Commands:
-- command
-- command
+Suggested Action:
+<exact command or action>
 
-Be specific. If it's Kubernetes, give kubectl commands.
-If it's Jenkins, give pipeline or permission fixes.
+Next Step:
+<what user should do next>
+
+Rules:
+- Be specific
+- If Kubernetes issue → give kubectl commands
+- If Jenkins issue → give pipeline or permission fixes
+- Do NOT give generic answers
 
 Logs:
 {log}
 """
-
     try:
         response = requests.post(API_URL, json={
             "model": MODEL,

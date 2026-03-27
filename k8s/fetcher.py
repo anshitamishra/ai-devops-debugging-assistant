@@ -10,6 +10,7 @@ def get_pod_logs(pod_name):
         )
 
         if result.returncode != 0:
+    
             # Fallback to describe
             describe = subprocess.run(
                 ["kubectl", "describe", "pod", pod_name],
