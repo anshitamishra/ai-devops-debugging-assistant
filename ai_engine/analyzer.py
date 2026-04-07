@@ -4,6 +4,8 @@ API_URL = "http://localhost:11434/api/generate"
 MODEL = "gemma3:4b"
 
 
+
+
 def analyze_log(log):
     prompt = f"""
 You are a senior DevOps engineer.
@@ -35,6 +37,7 @@ Rules:
 Logs:
 {log}
 """
+
     try:
         response = requests.post(API_URL, json={
             "model": MODEL,

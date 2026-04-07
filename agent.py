@@ -1,5 +1,6 @@
 import subprocess
 import requests
+import re
 
 API_URL = "http://localhost:11434/api/generate"
 MODEL = "gemma3:4b"
@@ -11,6 +12,38 @@ def run_command(command):
         return result.decode()
     except subprocess.CalledProcessError as e:
         return e.output.decode()
+
+
+def handle_special_commands(user_input):
+    user_input = user_input.lower()
+
+    # Restart app
+    if "restart" in user_input:
+        return "kubectl rollout restart deployment devops-app"
+
+    # Scale app
+    if "scale" in user_input:
+        match = re.search(r'\d+', user_input)
+        if match:
+            replicas = match.group()
+            return f"kubectl scale deployment devops-app --replicas={replicas}"
+        else:
+            return "UNKNOWN"
+
+    # Get all resources
+    if "get all" in user_input or "all resources" in user_input:
+        return "kubectl get all"
+
+    # Describe pod
+    if "describe pod" in user_input:
+        parts = user_input.split()
+        if len(parts) >= 3:
+            pod_name = parts[-1]
+            return f"kubectl describe pod {pod_name}"
+        else:
+            return "UNKNOWN"
+
+    return None
 
 
 def get_ai_command(user_input):
@@ -68,7 +101,12 @@ def agent():
         if user_input.lower() == "exit":
             break
 
-        command = get_ai_command(user_input)
+        # First check rule-based commands
+        command = handle_special_commands(user_input)
+
+        #  If not matched, use AI
+        if not command:
+            command = get_ai_command(user_input)
 
         print("\nGenerated Command:", command)
 
@@ -76,7 +114,10 @@ def agent():
             print("Could not understand request\n")
             continue
 
-        output = run_command(command)
+        if command.startswith("kubectl"):
+         output = run_command(command)
+        else:
+         output = "Blocked unsafe command"
 
         print("\n========== OUTPUT ==========\n")
         print(output)
