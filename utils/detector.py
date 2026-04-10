@@ -1,89 +1,107 @@
 def detect_known_issue(log):
     log_lower = log.lower()
+    issues = []
 
-    if "imagepullbackoff" in log_lower:
-        return "ImagePullBackOff"
-    elif "crashloopbackoff" in log_lower:
-        return "CrashLoopBackOff"
-    elif "oomkilled" in log_lower:
-        return "OOMKilled"
-    elif "permission denied" in log_lower:
-        return "PermissionDenied"
+    # Image issues
+    if "imagepullbackoff" in log_lower or "errimagepull" in log_lower:
+        issues.append("ImagePullBackOff")
 
-    return None
+    # Crash issues
+    if "crashloopbackoff" in log_lower or "back-off restarting" in log_lower:
+        issues.append("CrashLoopBackOff")
+
+    # Memory issues
+    if "oomkilled" in log_lower:
+        issues.append("OOMKilled")
+
+    # Permission issues
+    if "permission denied" in log_lower:
+        issues.append("PermissionDenied")
+
+    # Container stuck
+    if "containercreating" in log_lower:
+        issues.append("ContainerCreating")
+
+    # Remove duplicates
+    return list(set(issues)) if issues else None
 
 
 def handle_known_issue(issue):
     if issue == "ImagePullBackOff":
         return """
-⚠️ Severity: HIGH
+⚠️ Issue: ImagePullBackOff
+Severity: HIGH
 
 Root Cause:
-Container image cannot be pulled due to incorrect image name or missing registry access.
+Container image cannot be pulled.
 
 Fix:
 1. Verify image name and tag
-2. Check registry authentication
+2. Check registry access
 
-Suggested Action:
+Suggested Command:
 kubectl describe pod <pod-name>
-
-Next Step:
-Fix image configuration and redeploy the pod
 """
 
     elif issue == "CrashLoopBackOff":
         return """
-⚠️ Severity: HIGH
+⚠️ Issue: CrashLoopBackOff
+Severity: HIGH
 
 Root Cause:
-Application inside container is crashing repeatedly.
+Container is crashing repeatedly.
 
 Fix:
-1. Check application logs
-2. Fix runtime errors
+1. Check logs
+2. Verify configs/env variables
 
-Suggested Action:
+Suggested Command:
 kubectl logs <pod-name>
-
-Next Step:
-Debug the application and restart deployment
 """
 
     elif issue == "OOMKilled":
         return """
-⚠️ Severity: HIGH
+⚠️ Issue: OOMKilled
+Severity: HIGH
 
 Root Cause:
-Container exceeded memory limits and was terminated.
+Container exceeded memory limits.
 
 Fix:
 1. Increase memory limits
-2. Optimize memory usage
+2. Optimize application
 
-Suggested Action:
+Suggested Command:
 kubectl describe pod <pod-name>
-
-Next Step:
-Update resource limits and redeploy
 """
 
     elif issue == "PermissionDenied":
         return """
-⚠️ Severity: MEDIUM
+⚠️ Issue: PermissionDenied
+Severity: MEDIUM
 
 Root Cause:
-Permission issue in Jenkins or system configuration.
+Permission issue in system/Jenkins.
 
 Fix:
-1. Verify user permissions
-2. Check credentials configuration
-
-Suggested Action:
-Check Jenkins credentials and access settings
-
-Next Step:
-Update permissions and re-run the pipeline
+1. Check credentials
+2. Fix RBAC permissions
 """
 
-    return None
+    elif issue == "ContainerCreating":
+        return """
+⚠️ Issue: ContainerCreating
+Severity: MEDIUM
+
+Root Cause:
+Pod stuck while starting.
+
+Fix:
+1. Check events
+2. Verify volumes/network
+
+Suggested Command:
+kubectl describe pod <pod-name>
+"""
+
+    return ""

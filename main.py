@@ -7,13 +7,18 @@ from k8s.fetcher import get_pod_logs
 def process_logs(logs):
     for log in logs:
         log = log.strip()
+
+        if not log:
+            continue
+
         print(f"\nProcessing: {log}")
 
-        issue = detect_known_issue(log)
+        issues = detect_known_issue(log)
 
-        if issue:
+        if issues:
             print("\n========== RULE-BASED ANALYSIS ==========\n")
-            print(handle_known_issue(issue))
+            for issue in issues:
+                print(handle_known_issue(issue))
         else:
             print("\n========== AI ANALYSIS ==========\n")
             output = analyze_log(log)
@@ -26,6 +31,43 @@ def process_logs(logs):
         print("\n-----------------------------\n")
 
 
+def process_k8s_logs(logs):
+    if not logs:
+        print("No logs found or pod may not exist")
+        return
+
+    print("\n========== RAW POD DATA (PREVIEW) ==========\n")
+
+    log_lines = logs.split("\n")
+
+    # Show last 10 lines (useful preview)
+    print("\n".join(log_lines[-10:]))
+
+    # 🔥 MULTI-ISSUE DETECTION (IMPORTANT FIX)
+    all_issues = []
+
+    for line in log_lines:
+        issues = detect_known_issue(line)
+        if issues:
+            all_issues.extend(issues)
+
+    # Remove duplicates
+    all_issues = sorted(list(set(all_issues)))
+
+    if all_issues:
+        print("\n========== RULE-BASED ANALYSIS ==========\n")
+        for issue in all_issues:
+            print(handle_known_issue(issue))
+    else:
+        print("\n========== AI ANALYSIS ==========\n")
+        output = analyze_log(logs)
+
+        if output:
+            print(output.strip())
+        else:
+            print("No response from AI")
+
+
 def main():
     parser = argparse.ArgumentParser(description="AI DevOps Debugging Assistant")
 
@@ -35,7 +77,7 @@ def main():
 
     args = parser.parse_args()
 
-    print("=== AI DevOps Debugging Assistant ===")
+    print("\n=== AI DevOps Debugging Assistant ===\n")
 
     # Case 1: Single log
     if args.log:
@@ -53,25 +95,7 @@ def main():
     # Case 3: Kubernetes pod logs
     elif args.pod:
         logs = get_pod_logs(args.pod)
-
-        # Show small preview (clean output)
-        print("\n========== RAW POD DATA (PREVIEW) ==========\n")
-        print(logs[:500])  # show first 500 characters only
-
-        # Detect known issue from logs/describe output
-        issue = detect_known_issue(logs)
-
-        if issue:
-            print("\n========== RULE-BASED ANALYSIS ==========\n")
-            print(handle_known_issue(issue))
-        else:
-            print("\n========== AI ANALYSIS ==========\n")
-            output = analyze_log(logs)
-
-            if output:
-                print(output.strip())
-            else:
-                print("No response from AI")
+        process_k8s_logs(logs)
 
     # Case 4: fallback (manual input)
     else:
