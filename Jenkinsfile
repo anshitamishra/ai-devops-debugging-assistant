@@ -3,15 +3,9 @@ pipeline {
 
     stages {
 
-        stage('Clone Repo') {
-            steps {
-                echo 'Cloning repository...'
-            }
-        }
-
         stage('Run AI Debugging') {
             steps {
-                bat 'python main.py --log "CrashLoopBackOff error"'
+                sh 'python3 main.py --log "CrashLoopBackOff error"'
             }
         }
 
