@@ -37,6 +37,10 @@ Logs:
 {log}
 """
 
+    # 🧠 OPTIONAL: Skip AI for very small logs
+    if len(log.strip()) < 30:
+        return "⚠️ Using rule-based analysis (log too small for AI)"
+
     try:
         response = requests.post(
             API_URL,
@@ -45,27 +49,30 @@ Logs:
                 "prompt": prompt,
                 "stream": False
             },
-            timeout=10
+            timeout=8
         )
 
+        # ❌ AI service failed
         if response.status_code != 200:
-            return "⚠️ AI service returned an error"
+            return "⚠️ AI unavailable — fallback to rule-based analysis"
 
         try:
             result = response.json()
-        except:
-            return "⚠️ Invalid JSON response from AI service"
+        except Exception:
+            return "⚠️ AI returned invalid response — using fallback"
 
         output = result.get("response") or result.get("message", {}).get("content")
 
-        # Validate output format
+        # ❌ AI output not usable
         if not output or "Severity:" not in output:
-            return "⚠️ AI response invalid or incomplete"
+            return "⚠️ AI response incomplete — fallback triggered"
 
         return output.strip()
 
+    # ⏳ Timeout case
     except requests.exceptions.Timeout:
-        return "⚠️ AI service timeout. Try again."
+        return "⚠️ AI timeout — fallback to rule-based analysis"
 
-    except Exception as e:
-        return f"⚠️ Error connecting to AI service: {str(e)}"
+    # 🔌 Connection / any error
+    except Exception:
+        return "⚠️ AI not reachable — fallback to rule-based analysis"
