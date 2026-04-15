@@ -24,7 +24,7 @@ pipeline {
                     echo "Selected Pod: $POD"
                     echo "Status: $STATUS"
 
-                    if [[ "$STATUS" == "ImagePullBackOff" ]]; then
+                    if [ "$STATUS" = "ImagePullBackOff" ]; then
                         echo "Using describe for ImagePullBackOff..."
                         kubectl describe pod $POD > logs.txt
                     else
