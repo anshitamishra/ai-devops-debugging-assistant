@@ -21,11 +21,30 @@ pipeline {
             }
         }
 
+        stage('Clone Plane Repo') {
+            steps {
+                sh '''
+                echo "Cloning Plane Repository..."
+
+                if [ ! -d "plane-devops-project" ]; then
+                    git clone https://github.com/anshitamishra/plane-devops-project.git
+                else
+                    echo "Repo already exists, pulling latest changes..."
+                    cd plane-devops-project
+                    git pull
+                fi
+                '''
+            }
+        }
+
         stage('Deploy to Kubernetes') {
             steps {
                 sh '''
-                echo "Deploying to Kubernetes..."
-                kubectl apply -f deployment.yaml || true
+                echo "Deploying Plane app to Kubernetes..."
+                cd plane-devops-project
+
+                kubectl apply -f deployment.yaml
+                kubectl apply -f service.yaml
                 '''
             }
         }
