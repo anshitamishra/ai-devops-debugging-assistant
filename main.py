@@ -4,96 +4,72 @@ from ai_engine.analyzer import analyze_log
 from k8s.fetcher import get_pod_logs
 
 
-def process_logs(logs):
-    for log in logs:
-        log = log.strip()
+def run_analysis(log_data):
+    print("\n=== AI DevOps Debugging Assistant ===\n")
 
-        if not log:
-            continue
+    # ---------------- RULE-BASED FIRST ----------------
+    issues = detect_known_issue(log_data)
 
-        print(f"\nProcessing: {log}")
+    if issues:
+        print("========== RULE-BASED ANALYSIS ==========\n")
+        for issue in issues:
+            print(handle_known_issue(issue))
+        return
 
-        issues = detect_known_issue(log)
+    # ---------------- AI ANALYSIS ----------------
+    print("========== AI ANALYSIS ==========\n")
 
-        if issues:
-            print("\n========== RULE-BASED ANALYSIS ==========\n")
-            for issue in issues:
-                print(handle_known_issue(issue))
+    ai_output = analyze_log(log_data)
 
-        else:
-            print("\n========== AI ANALYSIS ==========\n")
-            output = analyze_log(log)
+    if ai_output and "⚠️" not in ai_output:
+        print(ai_output.strip())
+        return
 
-            if output and "Error connecting" not in output:
-                print(output.strip())
+    # ---------------- FALLBACK ----------------
+    print("⚠️ AI failed or unavailable. Falling back to rule-based detection...\n")
 
-            else:
-                print("⚠️ AI failed. Falling back to rule-based detection...\n")
+    fallback_issues = detect_known_issue(log_data)
 
-                fallback = detect_known_issue(log)
-
-                if fallback:
-                    for issue in fallback:
-                        print(handle_known_issue(issue))
-                else:
-                    print("No issues detected.")
-
-        print("\n-----------------------------\n")
+    if fallback_issues:
+        print("========== FALLBACK ANALYSIS ==========\n")
+        for issue in fallback_issues:
+            print(handle_known_issue(issue))
+    else:
+        print("No issues detected.")
 
 
+# ---------------- FILE INPUT ----------------
+def process_file(file_path):
+    try:
+        with open(file_path, "r") as f:
+            logs = f.read()   # ✅ FULL LOG, not line-by-line
+            run_analysis(logs)
+
+    except FileNotFoundError:
+        print("File not found. Please check path.")
+
+
+# ---------------- K8S LOGS ----------------
 def process_k8s_logs(logs):
     if not logs:
         print("No logs found or pod may not exist")
         return
 
-    print("\n========== RAW POD DATA (PREVIEW) ==========\n")
+    print("\n========== LOG PREVIEW ==========\n")
 
     log_lines = logs.split("\n")
 
-    # Show last 10 lines
-    print("\n".join(log_lines[-10:]))
+    # Show last few lines only (clean preview)
+    preview = "\n".join(log_lines[-10:])
+    print(preview)
 
-    # Detect all issues
-    all_issues = []
+    print("\n----------------------------------\n")
 
-    for line in log_lines:
-        issues = detect_known_issue(line)
-        if issues:
-            all_issues.extend(issues)
-
-    all_issues = sorted(list(set(all_issues)))
-
-    if all_issues:
-        print("\n========== RULE-BASED ANALYSIS ==========\n")
-        for issue in all_issues:
-            print(handle_known_issue(issue))
-
-    else:
-        print("\n========== AI ANALYSIS ==========\n")
-        output = analyze_log(logs)
-
-        if output and "Error connecting" not in output:
-            print(output.strip())
-
-        else:
-            print("⚠️ AI failed. Falling back to rule-based detection...\n")
-
-            fallback_issues = []
-
-            for line in log_lines:
-                detected = detect_known_issue(line)
-                if detected:
-                    fallback_issues.extend(detected)
-
-            fallback_issues = list(set(fallback_issues))
-
-            if fallback_issues:
-                for issue in fallback_issues:
-                    print(handle_known_issue(issue))
-            else:
-                print("No issues detected even in fallback.")
+    # 🔥 PASS FULL LOG (IMPORTANT FIX)
+    run_analysis(logs)
 
 
+# ---------------- MAIN ----------------
 def main():
     parser = argparse.ArgumentParser(description="AI DevOps Debugging Assistant")
 
@@ -103,27 +79,19 @@ def main():
 
     args = parser.parse_args()
 
-    print("\n=== AI DevOps Debugging Assistant ===\n")
-
     if args.log:
-        process_logs([args.log])
+        run_analysis(args.log)
 
     elif args.file:
-        try:
-            with open(args.file, "r") as f:
-                logs = f.readlines()
-                process_logs(logs)
-        except FileNotFoundError:
-            print("File not found. Please check path.")
+        process_file(args.file)
 
     elif args.pod:
         logs = get_pod_logs(args.pod)
         process_k8s_logs(logs)
 
     else:
-        logs = input("Enter logs (comma separated): ")
-        log_list = logs.split(",")
-        process_logs(log_list)
+        logs = input("Enter logs: ")
+        run_analysis(logs)
 
 
 if __name__ == "__main__":
