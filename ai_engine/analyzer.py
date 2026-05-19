@@ -1,47 +1,159 @@
 import requests
+from datetime import datetime
 
-API_URL = "http://host.docker.internal:11434"
+# =========================================
+# OLLAMA CONFIG
+# =========================================
+
+API_URL = "http://localhost:11434/api/generate"
 MODEL = "gemma3:4b"
 
 
-def analyze_log(log):
-    prompt = f"""
-You are a senior DevOps engineer with expertise in Kubernetes, Jenkins, and CI/CD systems.
+# =========================================
+# MAIN AI ANALYZER
+# =========================================
 
-Analyze the given logs and respond ONLY in the following format:
+def analyze_log(log):
+
+    # =====================================
+    # LOG PREPROCESSING
+    # =====================================
+
+    log = log.strip()
+
+    if not log:
+        return "⚠️ Empty logs received."
+
+    # =====================================
+    # SMART SHORT-LOG DETECTION
+    # =====================================
+
+    short_log_mode = False
+
+    if len(log) < 80:
+        short_log_mode = True
+
+    # =====================================
+    # INCIDENT TIMESTAMP
+    # =====================================
+
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # =====================================
+    # AI PROMPT
+    # =====================================
+
+    prompt = f"""
+You are an elite Senior DevOps Site Reliability Engineer (SRE).
+
+Your task is to analyze Kubernetes, Docker, Jenkins, CI/CD and infrastructure logs.
+
+You MUST return output STRICTLY in the following format.
+
+DO NOT explain outside format.
+
+========================================
+AI DEVOPS INCIDENT REPORT
+========================================
+
+Timestamp:
+{timestamp}
+
+Platform:
+<Kubernetes / Jenkins / Docker / CI-CD>
 
 Severity:
-<LOW | MEDIUM | HIGH>
+<LOW / MEDIUM / HIGH / CRITICAL>
+
+Confidence Score:
+<0-100%>
+
+Incident Summary:
+<short technical summary>
 
 Root Cause:
-<one clear and specific reason>
+<clear exact root cause>
 
 Fix:
 1. step
 2. step
+3. step
 
 Suggested Action:
-<exact kubectl / Jenkins / command>
+<exact kubectl / docker / Jenkins command>
 
 Next Step:
-<what user should do next>
+<next action engineer should take>
 
-STRICT RULES:
-- Do NOT explain outside format
-- If Kubernetes issue → include kubectl commands
-- If CI/CD issue → include Jenkins fixes
+Analysis Mode:
+<AI Analysis>
+
+IMPORTANT RULES:
+- Be concise
+- Be technical
+- Always provide commands
+- Focus on DevOps troubleshooting
+- Mention Kubernetes fixes if relevant
+- Mention Jenkins fixes if relevant
+- Mention Docker fixes if relevant
 - Avoid generic answers
-- Be precise and actionable
 
 Logs:
 {log}
 """
 
-    # 🧠 OPTIONAL: Skip AI for very small logs
-    if len(log.strip()) < 30:
-        return "⚠️ Using rule-based analysis (log too small for AI)"
+    # =====================================
+    # SMALL LOG FALLBACK
+    # =====================================
+
+    if short_log_mode:
+
+        return f"""
+========================================
+AI DEVOPS INCIDENT REPORT
+========================================
+
+Timestamp:
+{timestamp}
+
+Platform:
+Kubernetes
+
+Severity:
+LOW
+
+Confidence Score:
+65%
+
+Incident Summary:
+Log input too small for deep AI analysis.
+
+Root Cause:
+Insufficient log data provided.
+
+Fix:
+1. Provide complete logs
+2. Include deployment/container errors
+3. Retry with larger logs
+
+Suggested Action:
+kubectl logs <pod-name>
+
+Next Step:
+Retry analysis using full logs.
+
+Analysis Mode:
+Rule-based fallback triggered
+"""
+
+    # =====================================
+    # AI REQUEST
+    # =====================================
 
     try:
+
+        print("\n[INFO] Connecting to Ollama AI engine...\n")
+
         response = requests.post(
             API_URL,
             json={
@@ -49,30 +161,120 @@ Logs:
                 "prompt": prompt,
                 "stream": False
             },
-            timeout=8
+            timeout=120
         )
 
-        # ❌ AI service failed
+        # =================================
+        # RESPONSE STATUS CHECK
+        # =================================
+
         if response.status_code != 200:
-            return "⚠️ AI unavailable — fallback to rule-based analysis"
 
-        try:
-            result = response.json()
-        except Exception:
-            return "⚠️ AI returned invalid response — using fallback"
+            return f"""
+⚠️ AI service unavailable.
 
-        output = result.get("response") or result.get("message", {}).get("content")
+Status Code:
+{response.status_code}
 
-        # ❌ AI output not usable
-        if not output or "Severity:" not in output:
-            return "⚠️ AI response incomplete — fallback triggered"
+Fallback triggered.
+"""
 
-        return output.strip()
+        # =================================
+        # JSON PARSE
+        # =================================
 
-    # ⏳ Timeout case
+        result = response.json()
+
+        print("\n[DEBUG] AI API RESPONSE RECEIVED\n")
+
+        # =================================
+        # OUTPUT EXTRACTION
+        # =================================
+
+        output = result.get("response", "").strip()
+
+        # =================================
+        # EMPTY OUTPUT CHECK
+        # =================================
+
+        if not output:
+
+            return """
+⚠️ AI returned empty response.
+
+Fallback triggered.
+"""
+
+        # =================================
+        # DEBUG PREVIEW
+        # =================================
+
+        print("\n[DEBUG] RESPONSE PREVIEW:\n")
+        print(output[:300])
+
+        # =================================
+        # SUCCESS
+        # =================================
+
+        return f"""
+{output}
+
+============================================================
+AI Analysis Completed Successfully
+============================================================
+"""
+
+    # =====================================
+    # TIMEOUT ERROR
+    # =====================================
+
     except requests.exceptions.Timeout:
-        return "⚠️ AI timeout — fallback to rule-based analysis"
 
-    # 🔌 Connection / any error
-    except Exception:
-        return "⚠️ AI not reachable — fallback to rule-based analysis"
+        return """
+⚠️ AI request timeout.
+
+Possible Causes:
+- Large model loading
+- System RAM overload
+- Ollama cold start
+
+Suggested Fix:
+1. Run:
+   ollama run gemma3:4b
+
+2. Retry analysis
+
+3. Increase timeout if needed
+"""
+
+    # =====================================
+    # CONNECTION ERROR
+    # =====================================
+
+    except requests.exceptions.ConnectionError:
+
+        return """
+⚠️ Cannot connect to Ollama AI service.
+
+Verify:
+1. Ollama installed
+2. Ollama running
+3. Model downloaded
+
+Commands:
+- ollama list
+- ollama run gemma3:4b
+"""
+
+    # =====================================
+    # UNKNOWN ERROR
+    # =====================================
+
+    except Exception as e:
+
+        return f"""
+⚠️ AI analysis failed.
+
+Error:
+{str(e)}
+"""

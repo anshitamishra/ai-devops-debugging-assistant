@@ -1,0 +1,211 @@
+
+======================================================================
+              AI DEVOPS INCIDENT REPORT
+======================================================================
+Incident ID   : INC-20260519110529
+Generated At  : 2026-05-19 11:05:29
+Detection Mode: Hybrid (Rule-Based + AI)
+Supported Env : Kubernetes | Jenkins | Docker | CI/CD
+======================================================================
+
+========== RULE-BASED ANALYSIS ==========
+
+
+========================================
+INCIDENT: MetricsServerIssue
+========================================
+
+Severity:
+HIGH
+
+Priority:
+P2
+
+Root Cause:
+Kubernetes metrics API unavailable.
+
+Possible Causes:
+- Metrics server not installed
+- Metrics server crash
+- API aggregation issue
+
+Fix:
+1. Verify metrics server installation
+2. Restart metrics server
+3. Check API service health
+
+Suggested Commands:
+kubectl top pods
+kubectl get apiservices
+kubectl get pods -n kube-system
+
+Auto-Remediation Suggestion:
+- Reinstall metrics-server
+- Restart metrics components
+
+Business Impact:
+HPA autoscaling failure
+
+------------------------------------------------------------
+
+========================================
+INCIDENT: ImagePullBackOff
+========================================
+
+Severity:
+CRITICAL
+
+Priority:
+P1
+
+Root Cause:
+Container image cannot be pulled from registry.
+
+Possible Causes:
+- Incorrect image name
+- Wrong image tag
+- Docker registry authentication failure
+- Network connectivity issue
+
+Fix:
+1. Verify image name and tag
+2. Verify Docker registry credentials
+3. Check network connectivity
+
+Suggested Commands:
+kubectl describe pod <pod-name>
+kubectl get events
+docker pull <image-name>
+
+Auto-Remediation Suggestion:
+- Verify image exists in registry
+- Recreate deployment after fix
+
+Business Impact:
+Application deployment failure
+
+------------------------------------------------------------
+
+========================================
+INCIDENT: MonitoringFailure
+========================================
+
+Severity:
+HIGH
+
+Priority:
+P2
+
+Root Cause:
+Prometheus node-exporter repeatedly crashing.
+
+Possible Causes:
+- Node exporter configuration issue
+- Port conflict
+- Resource exhaustion
+
+Fix:
+1. Check exporter logs
+2. Verify monitoring configuration
+3. Restart monitoring stack
+
+Suggested Commands:
+kubectl logs <node-exporter-pod>
+kubectl describe pod <node-exporter-pod>
+helm list
+
+Auto-Remediation Suggestion:
+- Restart monitoring deployment
+- Reinstall exporter if needed
+
+Business Impact:
+Monitoring visibility reduced
+
+------------------------------------------------------------
+
+========================================
+INCIDENT: CrashLoopBackOff
+========================================
+
+Severity:
+CRITICAL
+
+Priority:
+P1
+
+Root Cause:
+Container is repeatedly crashing during startup.
+
+Possible Causes:
+- Application startup failure
+- Invalid environment variables
+- Database connection failure
+- Port conflicts
+
+Fix:
+1. Check application logs
+2. Verify configs/env variables
+3. Validate dependencies
+
+Suggested Commands:
+kubectl logs <pod-name>
+kubectl describe pod <pod-name>
+kubectl rollout restart deployment <deployment-name>
+
+Auto-Remediation Suggestion:
+- Restart deployment
+- Re-validate environment variables
+- Verify database connectivity
+
+Business Impact:
+Service downtime possible
+
+------------------------------------------------------------
+
+========== AI ANALYSIS ==========
+
+
+========================================
+AI DEVOPS INCIDENT REPORT
+========================================
+
+Timestamp:
+2026-05-19 11:05:29
+
+Platform:
+Kubernetes
+
+Severity:
+CRITICAL
+
+Confidence Score:
+95%
+
+Incident Summary:
+Failed image pulls for pods 'devops-demo' and 'monitoring-prometheus-node-exporter' resulting in container restarts and HPA failures.
+
+Root Cause:
+Missing or incorrect Docker credentials configured for the Kubernetes cluster, preventing the pull of the 'devops-demo' image.
+
+Fix:
+1. Verify Docker registry credentials configured in Kubernetes secrets.
+2. Ensure the correct image name and tag are specified in the deployment manifests.
+3. Update the image tag to a known, working version.
+
+Suggested Action:
+`kubectl -n monitoring get secret monitoring-registry -o yaml`
+
+Next Step:
+Engineer to examine the Kubernetes secrets and verify the credentials for the Docker registry.  Also verify the image name and tag in the deployment manifests.
+
+Analysis Mode:
+AI Analysis
+
+============================================================
+AI Analysis Completed Successfully
+============================================================
+
+
+======================================================================
+FINAL STATUS : INCIDENT DETECTED
+======================================================================
