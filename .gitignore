@@ -24,3 +24,12 @@ Thumbs.db
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Generated Reports
+incident_reports/
+
+# AI Memory Database
+data/*.json
+
+# Python Cache
+__pycache__/

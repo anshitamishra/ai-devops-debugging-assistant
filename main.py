@@ -6,6 +6,22 @@ from utils.detector import detect_known_issue, handle_known_issue
 from ai_engine.analyzer import analyze_log
 from k8s.fetcher import get_pod_logs
 
+from utils.history_manager import (
+    save_incident,
+    detect_recurring_issues
+)
+
+from utils.severity_engine import (
+    calculate_severity_score,
+    get_priority,
+    get_risk_level
+)
+
+from utils.incident_memory import (
+    store_incident,
+    search_similar_incidents
+)
+
 
 # =========================================
 # GENERATE INCIDENT ID
@@ -20,7 +36,6 @@ def generate_incident_id():
 # =========================================
 def save_incident_report(incident_id, content):
 
-    # Create reports directory automatically
     os.makedirs("incident_reports", exist_ok=True)
 
     filename = f"incident_reports/{incident_id}.txt"
@@ -108,13 +123,61 @@ def run_analysis(log_data):
 
     issues = detect_known_issue(log_data)
 
+    severity_score = 0
+    priority = "P4"
+    risk_level = "LOW"
+
     if issues:
 
         detected = True
 
+        severity_score = calculate_severity_score(issues)
+
+        priority = get_priority(severity_score)
+
+        risk_level = get_risk_level(severity_score)
+
+        print(f"Incident Risk Level : {risk_level}")
+        print(f"Incident Priority   : {priority}")
+        print(f"Severity Score      : {severity_score}/100\n")
+
+        report_content += f"Incident Risk Level : {risk_level}\n"
+        report_content += f"Incident Priority   : {priority}\n"
+        report_content += f"Severity Score      : {severity_score}/100\n\n"
+
         for issue in issues:
 
             result = handle_known_issue(issue)
+
+            # =====================================
+            # STORE INCIDENT INTO MEMORY
+            # =====================================
+
+            store_incident(
+                issue=issue,
+                root_cause="Detected automatically",
+                fix="Generated remediation steps"
+            )
+
+            # =====================================
+            # SEARCH PREVIOUS INCIDENTS
+            # =====================================
+
+            previous = search_similar_incidents(issue)
+
+            if len(previous) > 1:
+
+                print(
+                    f"\n[AI MEMORY] Found "
+                    f"{len(previous)-1} previous incidents "
+                    f"similar to {issue}\n"
+                )
+
+                report_content += (
+                    f"\n[AI MEMORY] Found "
+                    f"{len(previous)-1} previous incidents "
+                    f"similar to {issue}\n"
+                )
 
             print(result)
             print("-" * 60)
@@ -174,10 +237,44 @@ def run_analysis(log_data):
     report_content += final_status
 
     # =====================================
+    # SAVE INCIDENT HISTORY
+    # =====================================
+
+    if detected:
+
+        severity = risk_level
+
+        if issues:
+
+            save_incident(
+                incident_id=incident_id,
+                severity=severity,
+                issues=issues,
+                source="Kubernetes/CLI"
+            )
+
+    # =====================================
     # EXPORT INCIDENT REPORT
     # =====================================
 
     save_incident_report(incident_id, report_content)
+
+    # =====================================
+    # RECURRING INCIDENT DETECTION
+    # =====================================
+
+    recurring = detect_recurring_issues()
+
+    if recurring:
+
+        print("\n========== RECURRING INCIDENTS ==========\n")
+
+        for item in recurring:
+
+            print(
+                f"[WARNING] {item['issue']} occurred "
+                f"{item['count']} times."
+            )
 
 
 # =========================================
@@ -208,10 +305,6 @@ def process_file(file_path):
 # SMART KUBERNETES LOG PROCESSOR
 # =========================================
 def process_k8s_logs(logs):
-
-    # =====================================
-    # EMPTY LOG CHECK
-    # =====================================
 
     if not logs:
 
