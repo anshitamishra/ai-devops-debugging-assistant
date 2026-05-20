@@ -1,15 +1,18 @@
 import json
 import os
 from datetime import datetime
+from collections import Counter
 
 
 HISTORY_FILE = "data/incident_history.json"
 
 
 # =========================================
-# CREATE FILE IF NOT EXISTS
+# CREATE DATA DIRECTORY + FILE
 # =========================================
 def initialize_history():
+
+    os.makedirs("data", exist_ok=True)
 
     if not os.path.exists(HISTORY_FILE):
 
@@ -19,7 +22,7 @@ def initialize_history():
 
 
 # =========================================
-# LOAD INCIDENT HISTORY
+# LOAD HISTORY
 # =========================================
 def load_history():
 
@@ -37,7 +40,7 @@ def load_history():
 
 
 # =========================================
-# SAVE INCIDENT TO HISTORY
+# SAVE INCIDENT
 # =========================================
 def save_incident(
     incident_id,
@@ -64,7 +67,7 @@ def save_incident(
 
 
 # =========================================
-# GET TOTAL INCIDENT COUNT
+# TOTAL INCIDENTS
 # =========================================
 def get_incident_count():
 
@@ -72,8 +75,27 @@ def get_incident_count():
 
     return len(history)
 
+
 # =========================================
-# DETECT RECURRING INCIDENTS
+# CRITICAL INCIDENT COUNT
+# =========================================
+def get_critical_count():
+
+    history = load_history()
+
+    count = 0
+
+    for incident in history:
+
+        if incident.get("severity") == "HIGH":
+
+            count += 1
+
+    return count
+
+
+# =========================================
+# RECURRING INCIDENTS
 # =========================================
 def detect_recurring_issues():
 
@@ -93,7 +115,7 @@ def detect_recurring_issues():
 
     for issue, count in issue_count.items():
 
-        if count >= 3:
+        if count >= 2:
 
             recurring.append({
                 "issue": issue,
@@ -101,3 +123,41 @@ def detect_recurring_issues():
             })
 
     return recurring
+
+
+# =========================================
+# INCIDENT TREND DATA
+# =========================================
+def get_incident_trend():
+
+    history = load_history()
+
+    trend = {}
+
+    for incident in history:
+
+        date = incident["timestamp"].split(" ")[0]
+
+        trend[date] = trend.get(date, 0) + 1
+
+    return trend
+
+
+# =========================================
+# ISSUE DISTRIBUTION
+# =========================================
+def get_issue_distribution():
+
+    history = load_history()
+
+    counter = Counter()
+
+    for incident in history:
+
+        issues = incident.get("issues", [])
+
+        for issue in issues:
+
+            counter[issue] += 1
+
+    return dict(counter)
