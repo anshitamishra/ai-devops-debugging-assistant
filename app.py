@@ -285,6 +285,15 @@ except Exception as e:
     ram_data = {"data": {"result": []}}
     uptime_data = {"data": {"result": []}}
 
+    st.write("CPU DATA")
+    st.json(cpu_data)
+
+    st.write("RAM DATA")
+    st.json(ram_data)
+
+    st.write("UPTIME DATA")
+    st.json(uptime_data)
+ 
 
 # =========================================================
 # CPU
@@ -423,8 +432,8 @@ else:
 st.markdown('<div class="section-heading">Live Grafana Dashboard</div>', unsafe_allow_html=True)
 
 st.components.v1.iframe(
-    "http://localhost:3000",
-    height=600,
+    "http://localhost:3001/goto/dfnzknbinsmioc?orgId=1",
+    height=1400,
     scrolling=True
 )
 
