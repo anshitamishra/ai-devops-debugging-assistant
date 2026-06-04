@@ -33,3 +33,5 @@ data/*.json
 
 # Python Cache
 __pycache__/
+
+.history

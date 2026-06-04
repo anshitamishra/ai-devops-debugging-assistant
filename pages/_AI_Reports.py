@@ -2,6 +2,18 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from utils.k8s_monitor import get_live_incidents
+live_incidents = get_live_incidents()
+
+critical_incidents = len([
+    i for i in live_incidents
+    if i["status"] in [
+        "CrashLoopBackOff",
+        "ImagePullBackOff",
+        "ErrImagePull",
+        "OOMKilled"
+    ]
+])
 
 st.set_page_config(
     page_title="AI Reports",
@@ -115,20 +127,20 @@ with c1:
     """, unsafe_allow_html=True)
 
 with c2:
-    st.markdown("""
+    st.markdown(f"""
     <div class="metric-box">
-        <div class="metric-number">128</div>
+        <div class="metric-number">{len(live_incidents)}</div>
         <div class="metric-label">Incidents Analyzed</div>
     </div>
     """, unsafe_allow_html=True)
 
 with c3:
-    st.markdown("""
-    <div class="metric-box">
-        <div class="metric-number">17m</div>
-        <div class="metric-label">Avg RCA Time</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f"""
+<div class="metric-box">
+    <div class="metric-number">{critical_incidents}</div>
+    <div class="metric-label">Critical Incidents</div>
+</div>
+""", unsafe_allow_html=True)
 
 with c4:
     st.markdown("""
@@ -176,42 +188,47 @@ with left:
 
     st.markdown("## Incident Distribution")
 
-    issue_data = pd.DataFrame({
-        "Issue": [
-            "CrashLoopBackOff",
-            "OOMKilled",
-            "ImagePullBackOff",
-            "NodeFailure",
-            "ContainerRestart"
-        ],
+    issue_counts = {}
 
-        "Count": [
-            34,
-            18,
-            12,
-            9,
-            21
-        ]
-    })
+    for incident in live_incidents:
 
-    fig = px.bar(
-        issue_data,
-        x="Issue",
-        y="Count",
-        color="Count"
-    )
+        issue = incident["status"]
 
-    fig.update_layout(
-        paper_bgcolor="#0b1220",
-        plot_bgcolor="#0b1220",
-        font_color="white",
-        height=420
-    )
+        issue_counts[issue] = (
+            issue_counts.get(issue, 0) + 1
+        )
 
-    st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
+    if len(issue_counts) > 0:
+
+        issue_data = pd.DataFrame({
+            "Issue": list(issue_counts.keys()),
+            "Count": list(issue_counts.values())
+        })
+
+        fig = px.bar(
+            issue_data,
+            x="Issue",
+            y="Count",
+            color="Count"
+        )
+
+        fig.update_layout(
+            paper_bgcolor="#0b1220",
+            plot_bgcolor="#0b1220",
+            font_color="white",
+            height=420
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
+
+    else:
+
+        st.info(
+            "No active incidents available for analysis."
+        )
 
 with right:
 
@@ -260,46 +277,49 @@ with right:
 
 st.markdown("## AI Root Cause Intelligence")
 
-incident_df = pd.DataFrame({
+incident_rows = []
 
-    "Incident": [
-        "CrashLoopBackOff",
-        "OOMKilled",
-        "ImagePullBackOff",
-        "MetricsServerFailure",
-        "ContainerRestart"
-    ],
+for incident in live_incidents:
 
-    "Primary Cause": [
-        "Deployment startup failure",
-        "Memory exhaustion",
-        "Registry authentication issue",
-        "Monitoring service instability",
-        "Application crash loop"
-    ],
+    incident_rows.append({
 
-    "Risk Level": [
-        "Critical",
-        "High",
-        "Critical",
-        "Medium",
-        "Medium"
-    ],
+        "Incident": incident["status"],
 
-    "AI Recommendation": [
-        "Validate deployment configs",
-        "Increase memory allocation",
-        "Verify registry credentials",
-        "Restart monitoring services",
-        "Inspect application runtime logs"
-    ]
-})
+        "Primary Cause":
+            "Container Failure"
+            if incident["status"] == "CrashLoopBackOff"
+            else "Image Pull Failure"
+            if incident["status"] == "ImagePullBackOff"
+            else "Infrastructure Issue",
 
-st.dataframe(
-    incident_df,
-    use_container_width=True,
-    height=300
-)
+        "Risk Level":
+            "Critical"
+            if incident["status"] in [
+                "CrashLoopBackOff",
+                "ImagePullBackOff",
+                "ErrImagePull"
+            ]
+            else "High",
+
+        "AI Recommendation":
+            "Check pod logs and deployment configuration"
+    })
+
+incident_df = pd.DataFrame(incident_rows)
+
+if len(incident_df) > 0:
+
+    st.dataframe(
+        incident_df,
+        use_container_width=True,
+        height=300
+    )
+
+else:
+
+    st.info(
+        "No active incidents available."
+    )
 
 # =====================================================
 # OPERATIONAL INSIGHTS

@@ -7,7 +7,8 @@ import plotly.graph_objects as go
 
 from utils.k8s_monitor import (
     get_cluster_health,
-    get_kubernetes_alerts
+    get_kubernetes_alerts,
+    get_live_incidents
 )
 
 from utils.prometheus_monitor import (
@@ -18,7 +19,7 @@ from utils.prometheus_monitor import (
 
 from utils.detector import detect_known_issue, handle_known_issue
 
-from ai_engine.openai_analyzer import analyze_with_ai
+from ai_engine.analyzer import analyze_log
 
 from utils.history_manager import get_incident_count
 
@@ -233,6 +234,8 @@ log_input = st.text_area(
     height=230
 )
 
+st.divider()
+
 # =========================================================
 # AI ANALYSIS
 # =========================================================
@@ -257,10 +260,44 @@ if st.button("Run AI Incident Analysis"):
 
             st.markdown(result)
 
-    ai_result = analyze_with_ai(log_input)
+    st.markdown("## AI Root Cause Analysis")
+
+    ai_result = analyze_log(log_input)
 
     st.markdown(ai_result)
 
+   # =========================================================
+# REAL-TIME KUBERNETES AI MONITORING
+# =========================================================
+
+st.divider()
+
+st.subheader("Real-Time Kubernetes AI Monitoring")
+
+live_incidents = get_live_incidents()
+
+if live_incidents:
+
+    st.markdown("### Active Kubernetes Incidents")
+
+    for incident in live_incidents:
+
+        st.error(
+            f"Pod: {incident['pod']} | Status: {incident['status']}"
+        )
+
+        ai_result = analyze_log(
+            incident["logs"]
+        )
+
+        st.markdown(ai_result)
+
+else:
+
+    st.success(
+        "No active Kubernetes incidents detected."
+    )
+    
 # =========================================================
 # PROMETHEUS METRICS
 # =========================================================
@@ -276,6 +313,15 @@ try:
     cpu_data = get_cpu_usage()
     ram_data = get_ram_available()
     uptime_data = get_system_uptime()
+
+    st.write("CPU DATA")
+    st.json(cpu_data)
+
+    st.write("RAM DATA")
+    st.json(ram_data)
+
+    st.write("UPTIME DATA")
+    st.json(uptime_data)
 
 except Exception as e:
 
@@ -432,7 +478,7 @@ else:
 st.markdown('<div class="section-heading">Live Grafana Dashboard</div>', unsafe_allow_html=True)
 
 st.components.v1.iframe(
-    "http://localhost:3001/goto/dfnzknbinsmioc?orgId=1",
+    "http://localhost:3001/d/advdbdt/ai-devops-monitoring-dashboard?orgId=1&from=now-6h&to=now&timezone=browser",
     height=1400,
     scrolling=True
 )
