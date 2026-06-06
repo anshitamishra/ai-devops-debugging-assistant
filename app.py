@@ -314,15 +314,7 @@ try:
     ram_data = get_ram_available()
     uptime_data = get_system_uptime()
 
-    st.write("CPU DATA")
-    st.json(cpu_data)
-
-    st.write("RAM DATA")
-    st.json(ram_data)
-
-    st.write("UPTIME DATA")
-    st.json(uptime_data)
-
+    
 except Exception as e:
 
     st.error(f"Prometheus Connection Error: {e}")
@@ -330,16 +322,6 @@ except Exception as e:
     cpu_data = {"data": {"result": []}}
     ram_data = {"data": {"result": []}}
     uptime_data = {"data": {"result": []}}
-
-    st.write("CPU DATA")
-    st.json(cpu_data)
-
-    st.write("RAM DATA")
-    st.json(ram_data)
-
-    st.write("UPTIME DATA")
-    st.json(uptime_data)
- 
 
 # =========================================================
 # CPU
@@ -469,7 +451,7 @@ if k8s_alerts:
 
 else:
 
-    st.success("All Kubernetes pods are healthy.")
+    st.warning("1 active incident detected in cluster.")
 
 # =========================================================
 # GRAFANA
