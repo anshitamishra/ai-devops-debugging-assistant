@@ -1,131 +1,178 @@
-# AI DevOps Incident Intelligence Platform
+# AI-Powered DevOps Debugging Assistant
 
-Enterprise-grade AI-powered infrastructure incident monitoring and operational intelligence platform for Kubernetes and CI/CD environments.
+## Overview
 
----
+AI-Powered DevOps Debugging Assistant is an intelligent infrastructure monitoring and incident analysis platform designed to simplify Kubernetes operations through AI-driven observability and automated root cause identification.
 
-## Features
-
-- AI Root Cause Analysis
-- Kubernetes Incident Detection
-- Severity & Risk Analytics
-- Live Incident Feed
-- Recurring Incident Intelligence
-- Operational Monitoring Dashboard
-- Infrastructure Stability Insights
-- Hybrid AI + Rule-Based Detection
-- Automated Incident Recommendations
+The platform combines Kubernetes monitoring, Prometheus metrics collection, Grafana visualization, and AI-powered log analysis into a unified dashboard built using Streamlit. It helps DevOps engineers quickly identify infrastructure issues, understand root causes, monitor cluster health, and generate operational insights from system events and logs.
 
 ---
 
-## Supported Incident Types
+## Problem Statement
 
-- CrashLoopBackOff
-- OOMKilled
-- ImagePullBackOff
-- Container Restart Failures
-- Metrics Server Failures
-- Kubernetes Resource Issues
+Modern cloud-native environments generate large volumes of logs, metrics, and operational events. Identifying the root cause of incidents often requires manual investigation across multiple tools, increasing downtime and operational complexity.
 
----
+This project addresses these challenges by providing:
 
-## Tech Stack
-
-| Technology | Purpose |
-|---|---|
-| Python | Backend Logic |
-| Streamlit | Dashboard UI |
-| Plotly | Interactive Analytics |
-| Pandas | Data Processing |
-| JSON | Incident History Storage |
-| AI Analysis Engine | Root Cause Analysis |
+* Centralized infrastructure monitoring
+* Automated incident detection
+* AI-assisted log analysis
+* Root cause intelligence
+* Operational recommendations
+* Real-time Kubernetes observability
 
 ---
 
-## Dashboard Preview
+## Key Features
 
-### Main Dashboard
+### Infrastructure Monitoring
 
-![Dashboard](assets/dashboard.png)
+* Kubernetes cluster health monitoring
+* Node and pod status tracking
+* Running workload visibility
+* Infrastructure availability monitoring
 
----
+### AI-Powered Log Analysis
 
-### AI Root Cause Analysis
+* Automated log pattern analysis
+* Incident classification
+* Severity assessment
+* Root cause identification
+* Actionable remediation suggestions
 
-![Analysis](assets/analysis.png)
+### Incident Management Center
 
----
+* Centralized incident visibility
+* Active incident tracking
+* Critical alert monitoring
+* Operational event management
 
-### Incident Analytics
+### AI Intelligence Reports
 
-![Analytics](assets/analytics.png)
+* Executive infrastructure summaries
+* Incident distribution analysis
+* Risk prediction insights
+* Root cause intelligence
+* Strategic operational recommendations
 
----
+### Observability Dashboard
 
-### Live Incident Feed
-
-![Feed](assets/feed.png)
-
----
-
-## Project Architecture
-
-```text
-app.py
-│
-├── ai_engine/
-│   └── analyzer.py
-│
-├── utils/
-│   ├── detector.py
-│   ├── severity_engine.py
-│   └── history_manager.py
-│
-├── data/
-│   └── incident_history.json
-│
-└── assets/
-```
-
-## Run Locally
-
-```bash
-pip install -r requirements.txt
-streamlit run app.py
-```
+* Prometheus metrics integration
+* Grafana visualization dashboards
+* CPU utilization monitoring
+* Memory consumption tracking
+* System uptime visibility
 
 ---
 
-## Example Incident Log
+## System Architecture
 
-```text
-CrashLoopBackOff error because application failed to connect to MongoDB database and OOMKilled detected
-```
+The platform integrates two parallel analysis pipelines:
 
----
+### Infrastructure Monitoring Pipeline
 
-## AI Operational Insights
+Kubernetes → Prometheus → Grafana → Streamlit Dashboard
 
-The platform provides:
+This pipeline continuously collects infrastructure metrics and visualizes operational health across the Kubernetes environment.
 
-- AI-generated root cause analysis
-- Kubernetes remediation recommendations
-- Severity prioritization
-- Infrastructure trend analytics
-- Operational intelligence reporting
+### AI Analysis Pipeline
+
+Infrastructure Logs → AI Analysis Engine → Severity Assessment → Root Cause Intelligence → Incident Memory
+
+This pipeline analyzes operational events and generates actionable insights for incident resolution.
 
 ---
 
-## Future Improvements
+## Technology Stack
 
-- Real-time Kubernetes cluster integration
-- Prometheus/Grafana monitoring
-- LLM-powered anomaly detection
-- Slack/MS Teams alert integration
-- Auto-remediation workflows
+| Technology         | Purpose                                        |
+| ------------------ | ---------------------------------------------- |
+| Python             | Core application logic and processing          |
+| Streamlit          | Interactive web dashboard                      |
+| Kubernetes         | Container orchestration and cluster management |
+| Docker             | Application containerization                   |
+| Prometheus         | Metrics collection and monitoring              |
+| Grafana            | Infrastructure visualization                   |
+| Ollama (Gemma 3)   | AI-powered analysis and recommendations        |
+| Git & GitHub       | Version control and collaboration              |
+| Visual Studio Code | Development environment                        |
 
 ---
 
-## Author
+## Project Modules
 
-Anshita Mishra
+### Home Dashboard
+
+Provides a centralized overview of infrastructure status, incident statistics, and operational metrics.
+
+### Cluster Health Monitor
+
+Displays cluster availability, node health, pod status, and overall Kubernetes health indicators.
+
+### Incident Management Center
+
+Tracks active incidents, operational alerts, infrastructure events, and AI-generated recommendations.
+
+### AI Infrastructure Intelligence Reports
+
+Generates analytical reports containing:
+
+* Infrastructure stability assessment
+* Root cause intelligence
+* Risk prediction analysis
+* Operational recommendations
+* Incident trend analysis
+
+### Grafana Monitoring Dashboard
+
+Provides real-time visualization of:
+
+* CPU utilization
+* Memory usage
+* Disk utilization
+* Running pods
+* System uptime
+* Infrastructure performance metrics
+
+---
+
+## Workflow
+
+1. Infrastructure metrics are collected from Kubernetes.
+2. Prometheus stores operational metrics.
+3. Grafana visualizes infrastructure health.
+4. Logs are analyzed by the AI engine.
+5. Incidents are classified and prioritized.
+6. Root causes are identified.
+7. Recommendations are generated.
+8. Results are displayed through the Streamlit dashboard.
+
+---
+
+## Outcomes
+
+* Faster incident identification
+* Improved infrastructure visibility
+* Reduced troubleshooting effort
+* Centralized operational monitoring
+* AI-assisted root cause analysis
+* Better decision-making through actionable insights
+
+---
+
+## Future Enhancements
+
+* Multi-cluster monitoring support
+* Advanced anomaly detection
+* Automated remediation workflows
+* Incident notification integrations
+* Predictive infrastructure analytics
+* Historical trend forecasting
+
+---
+
+## Conclusion
+
+The AI-Powered DevOps Debugging Assistant demonstrates how Artificial Intelligence and modern observability tools can be integrated to enhance Kubernetes operations. By combining monitoring, visualization, incident intelligence, and AI-driven analysis within a unified platform, the system improves operational awareness and accelerates infrastructure troubleshooting.
+
+---
